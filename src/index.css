@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Анимация Матрицы */
+@keyframes matrix-fall {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(1000%); opacity: 0; }
+}
+
+/* Анимация левитации (плавания) */
+@keyframes floating {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.matrix-line {
+  position: absolute;
+  color: #00ff41;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  animation: matrix-fall 2s linear infinite;
+  text-shadow: 0 0 8px #00ff41;
+  pointer-events: none;
+}
+
+.animate-float {
+  animation: floating 4s ease-in-out infinite;
+}
+
+body {
+  margin: 0;
+  background-color: #020617;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Кастомный скроллбар для истории транзакций */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
