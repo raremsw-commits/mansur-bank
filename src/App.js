@@ -1,3 +1,4 @@
+const IPHONES = [{ id: 1, name: "iPhone 15", price: "1000$" }];
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Send, ShoppingBag, Smartphone, ShieldCheck, ArrowUpRight, Cpu, History, Lock, Terminal, Palette, Ghost } from 'lucide-react';
 
@@ -161,6 +162,8 @@ export default function App() {
         {activeTab === 'shop' && (
           <div className="space-y-4">
             {IPHONES.map(phone => (
+  <div key={phone.id}>{phone.name} - {phone.price}</div>
+))}
               <div key={phone.id} className="glass p-6 rounded-[35px] flex justify-between items-center hover:bg-white/5 transition-all">
                 <h4 className="font-black text-xl italic">{phone.name}</h4>
                 <button onClick={() => { 
