@@ -17,7 +17,6 @@ export default function App() {
   const [loginData, setLoginData] = useState({ login: '', pass: '' });
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('mansur_active_user') || '');
 
-  // Игровые данные
   const [balance, setBalance] = useState(0);
   const [btcBalance, setBtcBalance] = useState(0.001);
   const [cardNumber, setCardNumber] = useState('');
@@ -72,12 +71,15 @@ export default function App() {
       if (savedUser) return showNotif("ЛОГИН ЗАНЯТ!");
       const newCard = `4455 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`;
       localStorage.setItem(userKey, JSON.stringify({ login, pass }));
+      
+      // Сначала обновляем стейты, потом сессию
       setCurrentUser(login);
-      localStorage.setItem('mansur_active_user', login);
-      localStorage.setItem('mansur_session', 'true');
       setCardNumber(newCard);
       setBalance(500); 
       setBtcBalance(0.001);
+      
+      localStorage.setItem('mansur_active_user', login);
+      localStorage.setItem('mansur_session', 'true');
       setIsLoggedIn(true);
       showNotif("БОНУС ЗАЧИСЛЕН!");
     } else {
@@ -98,15 +100,15 @@ export default function App() {
              <ShieldCheck className="text-green-500" size={40}/>
              <div className="text-left">
                 <h1 className="text-2xl font-black text-green-500 italic">E-BANK</h1>
-                <p className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">Асидный цифровой банкинг</p>
+                <p className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">Цифровой банкинг</p>
              </div>
           </div>
           <h2 className="text-xl font-black text-center text-green-400 mb-8 uppercase tracking-widest">{isRegistering ? 'РЕГИСТРАЦИЯ' : 'ВХОД'}</h2>
           <div className="space-y-4">
-            <input type="text" placeholder="Придумайте username" className="w-full bg-black border border-green-500/40 rounded-xl p-4 text-white outline-none" onChange={e => setLoginData({...loginData, login: e.target.value})} />
+            <input type="text" placeholder="Username" className="w-full bg-black border border-green-500/40 rounded-xl p-4 text-white outline-none" onChange={e => setLoginData({...loginData, login: e.target.value})} />
             <input type="password" placeholder="Пароль" className="w-full bg-black border border-green-500/40 rounded-xl p-4 text-white outline-none" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
-            <button onClick={handleAuth} className="w-full py-4 rounded-xl font-black bg-gradient-to-r from-green-500 to-cyan-500 text-black uppercase shadow-lg shadow-green-500/20 active:scale-95 transition-all">
-              <User size={16} className="inline mr-2"/> {isRegistering ? 'СОЗДАТЬ АККАУНТ' : 'ВОЙТИ'}
+            <button onClick={handleAuth} className="w-full py-4 rounded-xl font-black bg-gradient-to-r from-green-500 to-cyan-500 text-black uppercase active:scale-95 transition-all">
+               {isRegistering ? 'СОЗДАТЬ АККАУНТ' : 'ВОЙТИ'}
             </button>
             <button onClick={() => setIsRegistering(!isRegistering)} className="w-full text-center text-[10px] text-purple-400 font-bold underline">
               {isRegistering ? 'Уже есть аккаунт?' : 'Создать новый аккаунт'}
@@ -121,8 +123,8 @@ export default function App() {
     <div className="min-h-screen bg-[#050505] text-white flex font-mono overflow-hidden">
       {notif && <div className="fixed top-5 right-5 bg-black border border-green-500 p-4 z-[300] rounded-lg shadow-2xl text-xs">{notif}</div>}
 
-      <aside className="w-64 bg-black border-r border-purple-500/20 p-6 flex flex-col gap-1">
-        <div className="mb-10"><h2 className="text-2xl font-black text-green-500">E-BANK</h2></div>
+      <aside className="w-64 bg-black border-r border-purple-500/20 p-6 flex flex-col gap-1 overflow-y-auto">
+        <div className="mb-10 text-center"><h2 className="text-2xl font-black text-green-500">E-BANK</h2></div>
         {[
           { id: 'dashboard', n: 'Дашборд', i: LayoutDashboard },
           { id: 'clicker', n: 'Кликер', i: MousePointer2 },
@@ -144,7 +146,7 @@ export default function App() {
       <main className="flex-1 p-10 overflow-y-auto">
         <header className="flex justify-between items-start mb-10">
           <div>
-            <h3 className="text-3xl font-black text-yellow-500 italic uppercase">ДАШБОРД E-BANK</h3>
+            <h3 className="text-3xl font-black text-yellow-500 italic uppercase">E-BANK</h3>
             <p className="text-[10px] opacity-40 uppercase tracking-widest">{currentUser} | {cardNumber}</p>
           </div>
           <div className="bg-black/60 p-6 rounded-3xl border border-white/5 text-right min-w-[200px]">
@@ -156,7 +158,7 @@ export default function App() {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
                     <p className="text-[10px] opacity-40 uppercase font-black mb-3">Ваш уровень</p>
                     <p className="text-3xl font-black">{level}</p>
@@ -169,19 +171,13 @@ export default function App() {
                     <p className={`text-xl font-black ${isVip ? 'text-purple-400' : 'text-cyan-400'}`}>{isVip ? 'Элитный' : 'Обычный'}</p>
                 </div>
                 <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
-                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">Стрик кликов</p>
-                    <p className="text-xl font-black text-cyan-400">0 дней</p>
+                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">XP</p>
+                    <p className="text-xl font-black text-cyan-400">{exp}</p>
                 </div>
                 <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
                     <p className="text-[10px] opacity-40 uppercase font-black mb-3">Кредиты</p>
                     <p className="text-xl font-black text-red-500">${loan.toLocaleString()} ₽</p>
                 </div>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-                <button onClick={() => setActiveTab('clicker')} className="p-4 bg-green-500 text-black font-black rounded-xl text-xs uppercase">ЗАРАБОТАТЬ В КЛИКЕРЕ</button>
-                <button onClick={() => setActiveTab('crypto')} className="p-4 bg-purple-500 text-black font-black rounded-xl text-xs uppercase">КУПИТЬ КРИПТУ</button>
-                <button onClick={() => showNotif("БОНУС УЖЕ ПОЛУЧЕН")} className="p-4 bg-cyan-500 text-black font-black rounded-xl text-xs uppercase">ЕЖЕДНЕВНЫЙ БОНУС</button>
-                <button onClick={() => setActiveTab('credit')} className="p-4 bg-purple-600 text-black font-black rounded-xl text-xs uppercase">ВЗЯТЬ КРЕДИТ</button>
             </div>
           </div>
         )}
@@ -191,28 +187,29 @@ export default function App() {
             <button onClick={() => { setBalance(b => b + 10); setExp(e => e + 5); }} className="w-64 h-64 rounded-full border-[10px] border-purple-500/30 bg-black flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.2)] active:scale-90 transition-all">
               <Zap size={80} className="text-purple-500"/>
             </button>
-            <p className="mt-10 text-xl font-black text-purple-400 animate-pulse">КЛИКАЙ!</p>
+            <p className="mt-10 text-xl font-black text-purple-400 animate-pulse uppercase">Кликай, чтобы заработать!</p>
           </div>
         )}
 
         {activeTab === 'p2p' && (
           <div className="max-w-md mx-auto bg-[#0a0a0a] p-8 rounded-3xl border border-white/10 space-y-6">
-            <h4 className="text-xl font-black uppercase tracking-tighter italic">Перевод по номеру карты</h4>
-            <input type="text" placeholder="4455 XXXX XXXX XXXX" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" />
+            <h4 className="text-xl font-black uppercase tracking-tighter italic">Перевод</h4>
+            <input type="text" placeholder="Номер карты" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" />
             <input type="number" id="send_val" placeholder="Сумма ₽" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xl font-black" />
             <button onClick={() => {
-              const v = Number(document.getElementById('send_val').value);
-              if(balance >= v && v > 0) { setBalance(b => b - v); addTransaction('ПЕРЕВОД', -v); showNotif("УСПЕШНО"); }
+              const el = document.getElementById('send_val');
+              const v = Number(el.value);
+              if(balance >= v && v > 0) { setBalance(b => b - v); addTransaction('ПЕРЕВОД', -v); showNotif("УСПЕШНО"); el.value = ''; }
               else { showNotif("МАЛО СРЕДСТВ"); }
-            }} className="w-full py-4 bg-green-500 text-black font-black rounded-xl">ОТПРАВИТЬ</button>
+            }} className="w-full py-4 bg-green-500 text-black font-black rounded-xl uppercase">Отправить</button>
           </div>
         )}
 
         {activeTab === 'crypto' && (
            <div className="max-w-md mx-auto bg-[#0a0a0a] p-8 rounded-3xl border border-white/10 space-y-6 text-center">
-              <Bitcoin size={60} className="mx-auto text-orange-500 shadow-orange-500/50"/>
+              <Bitcoin size={60} className="mx-auto text-orange-500"/>
               <h4 className="text-xl font-black uppercase italic">BITCOIN MARKET</h4>
-              <p className="text-2xl font-black">КУРС: $65,000 ₽</p>
+              <p className="text-2xl font-black">КУРС: 65,000 ₽ за 1 BTC</p>
               <button onClick={() => {
                 if(balance >= 6500) { setBalance(b => b - 6500); setBtcBalance(v => v + 0.1); showNotif("КУПЛЕНО 0.1 BTC"); }
                 else { showNotif("НУЖНО 6500 ₽"); }
@@ -221,14 +218,14 @@ export default function App() {
         )}
 
         {activeTab === 'shop' && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {IPHONES.map(p => (
               <div key={p.id} className="p-6 bg-[#0a0a0a] border border-white/10 rounded-2xl flex justify-between items-center">
                 <span className="font-black italic text-lg">{p.name}</span>
                 <button onClick={() => {
                   if(balance >= p.price) { setBalance(b => b - p.price); addTransaction(p.name, -p.price); showNotif("КУПЛЕНО"); }
                   else { showNotif("МАЛО ДЕНЕГ"); }
-                }} className="px-6 py-2 bg-green-500 text-black font-black rounded-lg">{p.price} ₽</button>
+                }} className="px-6 py-2 bg-green-500 text-black font-black rounded-lg">{p.price.toLocaleString()} ₽</button>
               </div>
             ))}
           </div>
@@ -236,14 +233,16 @@ export default function App() {
 
         {activeTab === 'invest' && (
           <div className="max-w-md mx-auto space-y-4">
-            <div className="p-6 bg-[#0a0a0a] border border-green-500/20 rounded-2xl flex justify-between">
+            <div className="p-6 bg-[#0a0a0a] border border-green-500/20 rounded-2xl flex justify-between items-center">
               <span className="font-black italic uppercase">АКЦИИ ГАЗПРОМ</span>
               <button onClick={() => {
                 if(balance >= 1000) {
                   const win = Math.random() > 0.5;
-                  setBalance(b => b + (win ? 2000 : -1000));
+                  const result = win ? 2000 : -1000;
+                  setBalance(b => b + result);
+                  addTransaction('ИНВЕСТ', result);
                   showNotif(win ? "ПРИБЫЛЬ +2000" : "УБЫТОК -1000");
-                }
+                } else { showNotif("НУЖНО 1000 ₽"); }
               }} className="px-4 py-2 bg-white/5 rounded-lg border border-white/20 text-xs font-black">ИНВЕСТ 1000₽</button>
             </div>
           </div>
@@ -253,19 +252,20 @@ export default function App() {
           <div className="max-w-md mx-auto bg-[#0a0a0a] p-10 rounded-3xl border border-red-500/20 text-center space-y-6">
             <Landmark size={48} className="mx-auto text-red-500"/>
             <h4 className="text-xl font-black uppercase">ВЗЯТЬ 50,000 ₽ В ДОЛГ</h4>
-            <p className="text-[10px] opacity-40">Возврат: 60,000 ₽</p>
+            <p className="text-[10px] opacity-40 uppercase">Возврат: 60,000 ₽</p>
             <button onClick={() => {
-              if(loan === 0) { setBalance(b => b + 50000); setLoan(60000); showNotif("ЗАЧИСЛЕНО"); }
-              else { showNotif("ЕСТЬ ДОЛГ"); }
-            }} className="w-full py-4 bg-red-600 text-black font-black rounded-xl">ПОЛУЧИТЬ КРЕДИТ</button>
+              if(loan === 0) { setBalance(b => b + 50000); setLoan(60000); addTransaction('КРЕДИТ', 50000); showNotif("ЗАЧИСЛЕНО"); }
+              else { showNotif("СНАЧАЛА ВЕРНИТЕ СТАРЫЙ"); }
+            }} className="w-full py-4 bg-red-600 text-black font-black rounded-xl uppercase">Получить кредит</button>
             <button onClick={() => {
-              if(balance >= loan && loan > 0) { setBalance(b => b - loan); setLoan(0); showNotif("ПОГАШЕНО"); }
-            }} className="w-full py-4 border border-white/10 rounded-xl">ВЕРНУТЬ ДОЛГ</button>
+              if(balance >= loan && loan > 0) { setBalance(b => b - loan); addTransaction('ОПЛАТА ДОЛГА', -loan); setLoan(0); showNotif("ПОГАШЕНО"); }
+              else { showNotif("НЕДОСТАТОЧНО СРЕДСТВ ИЛИ НЕТ ДОЛГА"); }
+            }} className="w-full py-4 border border-white/10 rounded-xl uppercase">Вернуть долг</button>
           </div>
         )}
 
         {activeTab === 'leader' && (
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-white/5 text-[10px] font-black uppercase opacity-40">
                 <tr><th className="p-6">RANK</th><th className="p-6">ИГРОК</th><th className="p-6">БАЛАНС</th></tr>
@@ -287,10 +287,10 @@ export default function App() {
             {transactions.map(t => (
               <div key={t.id} className="p-4 bg-[#0a0a0a] border border-white/5 rounded-xl flex justify-between text-xs font-bold">
                 <span className="opacity-40">{t.date} | {t.desc}</span>
-                <span className={t.amount > 0 ? 'text-green-500' : 'text-red-500'}>{t.amount > 0 ? '+' : ''}{t.amount} ₽</span>
+                <span className={t.amount > 0 ? 'text-green-500' : 'text-red-500'}>{t.amount > 0 ? '+' : ''}{t.amount.toLocaleString()} ₽</span>
               </div>
             ))}
-            {transactions.length === 0 && <p className="text-center opacity-20 py-20 uppercase font-black">История пуста</p>}
+            {transactions.length === 0 && <p className="text-center opacity-20 py-20 uppercase font-black tracking-widest">История пуста</p>}
           </div>
         )}
       </main>
