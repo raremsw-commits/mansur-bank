@@ -1,91 +1,116 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Send, ShoppingBag, Smartphone, ShieldCheck, ArrowUpRight, Cpu, History, Lock, Terminal, Palette, Ghost } from 'lucide-react';
+import { 
+  CreditCard, Send, ShoppingBag, ShieldCheck, Palette, Ghost, 
+  LayoutDashboard, ArrowRightLeft, History, LogOut, Box,
+  TrendingUp, Landmark, Crown, MousePointer2, Zap, User, Bitcoin, Gift, Clock
+} from 'lucide-react';
 
 const IPHONES = [
-  { id: 1, name: "iPhone 15 Pro", price: 1000 },
-  { id: 2, name: "iPhone 15", price: 800 },
-  { id: 3, name: "iPhone 14", price: 600 }
+  { id: 1, name: "iPhone 15 Pro Max", price: 120000 },
+  { id: 2, name: "iPhone 15 Pro", price: 100000 },
+  { id: 3, name: "iPhone 14", price: 60000 }
 ];
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginInput, setLoginInput] = useState('');
-  const [passInput, setPassInput] = useState('');
-  
-  const [theme, setTheme] = useState('blue');
-  const [balance, setBalance] = useState(() => Number(localStorage.getItem('mansur_balance')) || 100000);
-  const [activeTab, setActiveTab] = useState('card');
-  const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('mansur_tx')) || [{ id: 1, desc: 'SYSTEM_INIT', amount: 100000, date: 'START' }]);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('mansur_session') === 'true');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [loginData, setLoginData] = useState({ login: '', pass: '' });
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('mansur_active_user') || '');
+
+  // Игровые данные
+  const [balance, setBalance] = useState(0);
+  const [btcBalance, setBtcBalance] = useState(0.001);
+  const [cardNumber, setCardNumber] = useState('');
+  const [inventory, setInventory] = useState([]);
+  const [isVip, setIsVip] = useState(false);
+  const [loan, setLoan] = useState(0);
+  const [exp, setExp] = useState(0); 
+  const [transactions, setTransactions] = useState([]);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [notif, setNotif] = useState('');
-  const [isHacking, setIsHacking] = useState(false);
+
+  const level = Math.floor(exp / 150) + 1;
 
   useEffect(() => {
-    localStorage.setItem('mansur_balance', balance);
-    localStorage.setItem('mansur_tx', JSON.stringify(transactions));
-  }, [balance, transactions]);
+    if (isLoggedIn && currentUser) {
+      const userData = JSON.parse(localStorage.getItem(`data_${currentUser}`)) || {};
+      setBalance(userData.balance ?? 500);
+      setBtcBalance(userData.btc ?? 0.001);
+      setCardNumber(userData.card || '4455 0000 0000 0000');
+      setInventory(userData.inventory || []);
+      setIsVip(userData.isVip || false);
+      setLoan(userData.loan || 0);
+      setExp(userData.exp || 0);
+      setTransactions(userData.transactions || []);
+    }
+  }, [isLoggedIn, currentUser]);
+
+  useEffect(() => {
+    if (isLoggedIn && currentUser) {
+      const dataToSave = { balance, btc: btcBalance, card: cardNumber, inventory, isVip, loan, exp, transactions };
+      localStorage.setItem(`data_${currentUser}`, JSON.stringify(dataToSave));
+    }
+  }, [balance, btcBalance, inventory, isVip, loan, exp, transactions, isLoggedIn, currentUser, cardNumber]);
 
   const showNotif = (msg) => {
     setNotif(msg);
     setTimeout(() => setNotif(''), 3000);
   };
 
+  const addTransaction = (desc, amount) => {
+    const newTx = { id: Date.now(), desc, amount, date: new Date().toLocaleTimeString() };
+    setTransactions(prev => [newTx, ...prev]);
+  };
+
   const handleAuth = () => {
-    if (!loginInput || !passInput) {
-      showNotif("ЗАПОЛНИТЕ ВСЕ ПОЛЯ!");
-      return;
-    }
-    const savedUser = JSON.parse(localStorage.getItem('mansur_user'));
-    if (!savedUser) {
-      const newUser = { login: loginInput, pass: passInput };
-      localStorage.setItem('mansur_user', JSON.stringify(newUser));
+    const { login, pass } = loginData;
+    if (!login || !pass) return showNotif("ЗАПОЛНИТЕ ПОЛЯ!");
+    const userKey = `user_${login}`;
+    const savedUser = JSON.parse(localStorage.getItem(userKey));
+
+    if (isRegistering) {
+      if (savedUser) return showNotif("ЛОГИН ЗАНЯТ!");
+      const newCard = `4455 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`;
+      localStorage.setItem(userKey, JSON.stringify({ login, pass }));
+      setCurrentUser(login);
+      localStorage.setItem('mansur_active_user', login);
+      localStorage.setItem('mansur_session', 'true');
+      setCardNumber(newCard);
+      setBalance(500); 
+      setBtcBalance(0.001);
       setIsLoggedIn(true);
-      showNotif("АККАУНТ СОЗДАН!");
-    } else if (savedUser.login === loginInput && savedUser.pass === passInput) {
-      setIsLoggedIn(true);
-      showNotif("ДОСТУП РАЗРЕШЕН");
+      showNotif("БОНУС ЗАЧИСЛЕН!");
     } else {
-      showNotif("ОШИБКА: НЕВЕРНЫЙ ПАРОЛЬ");
+      if (savedUser && savedUser.pass === pass) {
+        setCurrentUser(login);
+        localStorage.setItem('mansur_active_user', login);
+        localStorage.setItem('mansur_session', 'true');
+        setIsLoggedIn(true);
+      } else { showNotif("ОШИБКА ДОСТУПА"); }
     }
   };
-
-  const startHacking = () => {
-    setIsHacking(true);
-    setTimeout(() => {
-      setIsHacking(false);
-      setBalance(prev => prev + 50000);
-      const newTx = { id: Date.now(), desc: 'HACK_BONUS', amount: 50000, date: 'NOW' };
-      setTransactions(prev => [newTx, ...prev]);
-      showNotif("ВЗЛОМ УДАЛСЯ: +$50,000");
-    }, 4000);
-  };
-
-  const MatrixEffect = () => (
-    <div className="fixed inset-0 bg-black z-[200] overflow-hidden flex justify-around">
-      {[...Array(30)].map((_, i) => (
-        <div key={i} className="matrix-line" style={{ left: `${i * 3.3}%`, animationDelay: `${Math.random() * 2}s` }}>
-          {Math.random().toString(36).substring(2, 8).toUpperCase()}
-        </div>
-      ))}
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
-        <Terminal size={80} className="text-green-500 animate-pulse mb-4" />
-        <h2 className="text-green-500 text-2xl font-mono tracking-[0.5em]">INJECTING...</h2>
-      </div>
-    </div>
-  );
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white p-6">
-        <div className="glass p-10 rounded-[40px] w-full max-w-sm shadow-2xl border border-white/10 text-center">
-          <div className={`${theme === 'blue' ? 'bg-blue-600' : 'bg-green-500'} w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-             <ShieldCheck size={40} />
+      <div className="min-h-screen flex items-center justify-center bg-black p-6 font-mono">
+        <div className="w-full max-w-md p-10 bg-[#050505] border border-green-500/30 rounded-[30px] shadow-[0_0_40px_rgba(0,255,0,0.2)]">
+          <div className="flex justify-center gap-4 mb-8">
+             <ShieldCheck className="text-green-500" size={40}/>
+             <div className="text-left">
+                <h1 className="text-2xl font-black text-green-500 italic">E-BANK</h1>
+                <p className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">Асидный цифровой банкинг</p>
+             </div>
           </div>
-          <h1 className="text-3xl font-black mb-2 italic">MANSUR BANK</h1>
-          <p className="text-[10px] opacity-40 mb-8 tracking-[0.3em]">SECURE GATEWAY</p>
-          <div className="space-y-4 text-left">
-            <input type="text" placeholder="ЛОГИН" className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:ring-2 ring-blue-500" onChange={e => setLoginInput(e.target.value)} />
-            <input type="password" placeholder="ПАРОЛЬ" className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none focus:ring-2 ring-blue-500" onChange={e => setPassInput(e.target.value)} />
-            <button onClick={handleAuth} className={`${theme === 'blue' ? 'bg-blue-600' : 'bg-green-500'} w-full py-5 rounded-2xl font-black`}>AUTHORIZE</button>
+          <h2 className="text-xl font-black text-center text-green-400 mb-8 uppercase tracking-widest">{isRegistering ? 'РЕГИСТРАЦИЯ' : 'ВХОД'}</h2>
+          <div className="space-y-4">
+            <input type="text" placeholder="Придумайте username" className="w-full bg-black border border-green-500/40 rounded-xl p-4 text-white outline-none" onChange={e => setLoginData({...loginData, login: e.target.value})} />
+            <input type="password" placeholder="Пароль" className="w-full bg-black border border-green-500/40 rounded-xl p-4 text-white outline-none" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
+            <button onClick={handleAuth} className="w-full py-4 rounded-xl font-black bg-gradient-to-r from-green-500 to-cyan-500 text-black uppercase shadow-lg shadow-green-500/20 active:scale-95 transition-all">
+              <User size={16} className="inline mr-2"/> {isRegistering ? 'СОЗДАТЬ АККАУНТ' : 'ВОЙТИ'}
+            </button>
+            <button onClick={() => setIsRegistering(!isRegistering)} className="w-full text-center text-[10px] text-purple-400 font-bold underline">
+              {isRegistering ? 'Уже есть аккаунт?' : 'Создать новый аккаунт'}
+            </button>
           </div>
         </div>
       </div>
@@ -93,86 +118,182 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white pb-32">
-      {isHacking && <MatrixEffect />}
-      {notif && <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[250] glass px-8 py-4 rounded-2xl font-black border-l-4 ${theme === 'blue' ? 'border-blue-500' : 'border-green-500'} shadow-2xl`}>{notif}</div>}
+    <div className="min-h-screen bg-[#050505] text-white flex font-mono overflow-hidden">
+      {notif && <div className="fixed top-5 right-5 bg-black border border-green-500 p-4 z-[300] rounded-lg shadow-2xl text-xs">{notif}</div>}
 
-      <header className="p-10 flex justify-between items-center max-w-5xl mx-auto">
-        <div className="flex items-center gap-4">
-          <h2 className={`text-2xl font-black italic border-b-2 ${theme === 'blue' ? 'border-blue-600' : 'border-green-500'}`}>MANSUR BANK</h2>
-          <button onClick={() => setTheme(theme === 'blue' ? 'green' : 'blue')} className="p-2 glass rounded-xl"><Palette size={20} /></button>
-        </div>
-        <div className="text-right">
-          <p className="text-slate-500 text-[10px] font-bold uppercase">Balance</p>
-          <p className={`text-3xl font-black ${theme === 'blue' ? 'text-blue-400' : 'text-green-400'}`}>${balance.toLocaleString()}</p>
-        </div>
-      </header>
+      <aside className="w-64 bg-black border-r border-purple-500/20 p-6 flex flex-col gap-1">
+        <div className="mb-10"><h2 className="text-2xl font-black text-green-500">E-BANK</h2></div>
+        {[
+          { id: 'dashboard', n: 'Дашборд', i: LayoutDashboard },
+          { id: 'clicker', n: 'Кликер', i: MousePointer2 },
+          { id: 'p2p', n: 'Переводы', i: ArrowRightLeft },
+          { id: 'crypto', n: 'Крипта', i: Bitcoin },
+          { id: 'shop', n: 'Магазин', i: ShoppingBag },
+          { id: 'invest', n: 'Инвест', i: TrendingUp },
+          { id: 'credit', n: 'Кредиты', i: Landmark },
+          { id: 'leader', n: 'Топ игроков', i: Crown },
+          { id: 'history', n: 'История', i: History },
+        ].map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${activeTab === t.id ? `bg-purple-900/30 border border-purple-500/50 text-white` : 'opacity-40 hover:opacity-100'}`}>
+            <t.i size={16}/> <span className="text-xs font-bold uppercase">{t.n}</span>
+          </button>
+        ))}
+        <button onClick={() => { localStorage.removeItem('mansur_session'); window.location.reload(); }} className="mt-auto p-2 text-red-500 text-xs font-bold flex items-center gap-2 opacity-50 hover:opacity-100"><LogOut size={16}/> ВЫХОД</button>
+      </aside>
 
-      <main className="px-6 max-w-5xl mx-auto space-y-10">
-        {activeTab === 'card' && (
+      <main className="flex-1 p-10 overflow-y-auto">
+        <header className="flex justify-between items-start mb-10">
+          <div>
+            <h3 className="text-3xl font-black text-yellow-500 italic uppercase">ДАШБОРД E-BANK</h3>
+            <p className="text-[10px] opacity-40 uppercase tracking-widest">{currentUser} | {cardNumber}</p>
+          </div>
+          <div className="bg-black/60 p-6 rounded-3xl border border-white/5 text-right min-w-[200px]">
+            <p className="text-[9px] opacity-40 uppercase">БАЛАНС</p>
+            <p className="text-3xl font-black text-green-400 tracking-tighter">${balance.toLocaleString()} ₽</p>
+            <p className="text-[10px] text-orange-400 font-bold">₿ {btcBalance.toFixed(4)}</p>
+          </div>
+        </header>
+
+        {activeTab === 'dashboard' && (
           <div className="space-y-8">
-            <div className="h-64 w-full rounded-[45px] p-10 glass border-white/20 shadow-2xl relative overflow-hidden">
-               <div className="relative z-10 h-full flex flex-col justify-between font-mono">
-                  <div className="flex justify-between items-start">
-                    <Cpu size={32} className={theme === 'blue' ? 'text-blue-400' : 'text-green-400'} />
-                    <button onClick={startHacking} className="p-2 glass rounded-lg"><Ghost size={24} /></button>
-                  </div>
-                  <p className="text-2xl tracking-[0.2em]">4455 8899 0011 2026</p>
-                  <p className="text-xl font-black italic">{loginInput.toUpperCase()}</p>
-               </div>
-            </div>
-            <div className="glass rounded-[35px] p-8">
-               <h3 className="text-xl font-black mb-6 italic">HISTORY</h3>
-               <div className="space-y-4 max-h-60 overflow-y-auto">
-                  {transactions.map(tx => (
-                    <div key={tx.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                       <p className="text-sm font-bold">{tx.desc}</p>
-                       <p className={`font-black ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>{tx.amount > 0 ? '+' : ''}{tx.amount}$</p>
+            <div className="grid grid-cols-4 gap-4">
+                <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
+                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">Ваш уровень</p>
+                    <p className="text-3xl font-black">{level}</p>
+                    <div className="w-full bg-black h-1.5 rounded-full mt-4 overflow-hidden border border-white/5">
+                        <div className="bg-green-500 h-full" style={{ width: `${(exp % 150) / 1.5}%` }}></div>
                     </div>
-                  ))}
-               </div>
+                </div>
+                <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
+                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">VIP статус</p>
+                    <p className={`text-xl font-black ${isVip ? 'text-purple-400' : 'text-cyan-400'}`}>{isVip ? 'Элитный' : 'Обычный'}</p>
+                </div>
+                <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
+                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">Стрик кликов</p>
+                    <p className="text-xl font-black text-cyan-400">0 дней</p>
+                </div>
+                <div className="p-6 bg-[#0a0a0a] border border-purple-500/20 rounded-2xl text-center">
+                    <p className="text-[10px] opacity-40 uppercase font-black mb-3">Кредиты</p>
+                    <p className="text-xl font-black text-red-500">${loan.toLocaleString()} ₽</p>
+                </div>
             </div>
+            <div className="grid grid-cols-4 gap-4">
+                <button onClick={() => setActiveTab('clicker')} className="p-4 bg-green-500 text-black font-black rounded-xl text-xs uppercase">ЗАРАБОТАТЬ В КЛИКЕРЕ</button>
+                <button onClick={() => setActiveTab('crypto')} className="p-4 bg-purple-500 text-black font-black rounded-xl text-xs uppercase">КУПИТЬ КРИПТУ</button>
+                <button onClick={() => showNotif("БОНУС УЖЕ ПОЛУЧЕН")} className="p-4 bg-cyan-500 text-black font-black rounded-xl text-xs uppercase">ЕЖЕДНЕВНЫЙ БОНУС</button>
+                <button onClick={() => setActiveTab('credit')} className="p-4 bg-purple-600 text-black font-black rounded-xl text-xs uppercase">ВЗЯТЬ КРЕДИТ</button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'clicker' && (
+          <div className="flex flex-col items-center justify-center py-10">
+            <button onClick={() => { setBalance(b => b + 10); setExp(e => e + 5); }} className="w-64 h-64 rounded-full border-[10px] border-purple-500/30 bg-black flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.2)] active:scale-90 transition-all">
+              <Zap size={80} className="text-purple-500"/>
+            </button>
+            <p className="mt-10 text-xl font-black text-purple-400 animate-pulse">КЛИКАЙ!</p>
           </div>
         )}
 
         {activeTab === 'p2p' && (
-          <div className="glass p-10 rounded-[40px] space-y-6">
-             <h3 className="text-2xl font-black mb-4 italic">P2P PROTOCOL</h3>
-             <input id="p2p_val" type="number" placeholder="AMOUNT" className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 outline-none text-2xl" />
-             <button onClick={() => {
-                const a = Number(document.getElementById('p2p_val').value);
-                if(balance >= a && a > 0) { 
-                  setBalance(b => b - a); 
-                  setTransactions(prev => [{ id: Date.now(), desc: 'TRANSFER_OUT', amount: -a, date: 'NOW' }, ...prev]); 
-                  showNotif('ОТПРАВЛЕНО'); 
-                } else { showNotif('НЕДОСТАТОЧНО СРЕДСТВ'); }
-             }} className={`w-full ${theme === 'blue' ? 'bg-blue-600' : 'bg-green-500'} py-5 rounded-3xl font-black`}>SEND ASSETS</button>
+          <div className="max-w-md mx-auto bg-[#0a0a0a] p-8 rounded-3xl border border-white/10 space-y-6">
+            <h4 className="text-xl font-black uppercase tracking-tighter italic">Перевод по номеру карты</h4>
+            <input type="text" placeholder="4455 XXXX XXXX XXXX" className="w-full bg-black border border-white/10 p-4 rounded-xl text-sm" />
+            <input type="number" id="send_val" placeholder="Сумма ₽" className="w-full bg-black border border-white/10 p-4 rounded-xl text-xl font-black" />
+            <button onClick={() => {
+              const v = Number(document.getElementById('send_val').value);
+              if(balance >= v && v > 0) { setBalance(b => b - v); addTransaction('ПЕРЕВОД', -v); showNotif("УСПЕШНО"); }
+              else { showNotif("МАЛО СРЕДСТВ"); }
+            }} className="w-full py-4 bg-green-500 text-black font-black rounded-xl">ОТПРАВИТЬ</button>
           </div>
         )}
 
+        {activeTab === 'crypto' && (
+           <div className="max-w-md mx-auto bg-[#0a0a0a] p-8 rounded-3xl border border-white/10 space-y-6 text-center">
+              <Bitcoin size={60} className="mx-auto text-orange-500 shadow-orange-500/50"/>
+              <h4 className="text-xl font-black uppercase italic">BITCOIN MARKET</h4>
+              <p className="text-2xl font-black">КУРС: $65,000 ₽</p>
+              <button onClick={() => {
+                if(balance >= 6500) { setBalance(b => b - 6500); setBtcBalance(v => v + 0.1); showNotif("КУПЛЕНО 0.1 BTC"); }
+                else { showNotif("НУЖНО 6500 ₽"); }
+              }} className="w-full py-4 bg-orange-500 text-black font-black rounded-xl">КУПИТЬ 0.1 BTC (6500 ₽)</button>
+           </div>
+        )}
+
         {activeTab === 'shop' && (
-          <div className="space-y-4">
-            {IPHONES.map(phone => (
-              <div key={phone.id} className="glass p-6 rounded-[35px] flex justify-between items-center">
-                <h4 className="font-black text-xl italic">{phone.name}</h4>
-                <button onClick={() => { 
-                  if(balance >= phone.price) { 
-                    setBalance(b => b - phone.price); 
-                    setTransactions(prev => [{ id: Date.now(), desc: 'IPHONE_BUY', amount: -phone.price, date: 'NOW' }, ...prev]);
-                    showNotif('КУПЛЕНО'); 
-                  } else { showNotif('МАЛО ДЕНЕГ'); }
-                }} className={`${theme === 'blue' ? 'bg-blue-600' : 'bg-green-500'} px-8 py-3 rounded-2xl font-black`}>${phone.price}</button>
+          <div className="grid grid-cols-2 gap-4">
+            {IPHONES.map(p => (
+              <div key={p.id} className="p-6 bg-[#0a0a0a] border border-white/10 rounded-2xl flex justify-between items-center">
+                <span className="font-black italic text-lg">{p.name}</span>
+                <button onClick={() => {
+                  if(balance >= p.price) { setBalance(b => b - p.price); addTransaction(p.name, -p.price); showNotif("КУПЛЕНО"); }
+                  else { showNotif("МАЛО ДЕНЕГ"); }
+                }} className="px-6 py-2 bg-green-500 text-black font-black rounded-lg">{p.price} ₽</button>
               </div>
             ))}
           </div>
         )}
-      </main>
 
-      <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass p-2 rounded-full flex justify-around shadow-2xl z-[100]">
-        <button onClick={() => setActiveTab('card')} className={`p-5 rounded-full ${activeTab === 'card' ? (theme === 'blue' ? 'bg-blue-600' : 'bg-green-500') : 'text-slate-500'}`}><CreditCard /></button>
-        <button onClick={() => setActiveTab('p2p')} className={`p-5 rounded-full ${activeTab === 'p2p' ? (theme === 'blue' ? 'bg-blue-600' : 'bg-green-500') : 'text-slate-500'}`}><Send /></button>
-        <button onClick={() => setActiveTab('shop')} className={`p-5 rounded-full ${activeTab === 'shop' ? (theme === 'blue' ? 'bg-blue-600' : 'bg-green-500') : 'text-slate-500'}`}><ShoppingBag /></button>
-      </nav>
+        {activeTab === 'invest' && (
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="p-6 bg-[#0a0a0a] border border-green-500/20 rounded-2xl flex justify-between">
+              <span className="font-black italic uppercase">АКЦИИ ГАЗПРОМ</span>
+              <button onClick={() => {
+                if(balance >= 1000) {
+                  const win = Math.random() > 0.5;
+                  setBalance(b => b + (win ? 2000 : -1000));
+                  showNotif(win ? "ПРИБЫЛЬ +2000" : "УБЫТОК -1000");
+                }
+              }} className="px-4 py-2 bg-white/5 rounded-lg border border-white/20 text-xs font-black">ИНВЕСТ 1000₽</button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'credit' && (
+          <div className="max-w-md mx-auto bg-[#0a0a0a] p-10 rounded-3xl border border-red-500/20 text-center space-y-6">
+            <Landmark size={48} className="mx-auto text-red-500"/>
+            <h4 className="text-xl font-black uppercase">ВЗЯТЬ 50,000 ₽ В ДОЛГ</h4>
+            <p className="text-[10px] opacity-40">Возврат: 60,000 ₽</p>
+            <button onClick={() => {
+              if(loan === 0) { setBalance(b => b + 50000); setLoan(60000); showNotif("ЗАЧИСЛЕНО"); }
+              else { showNotif("ЕСТЬ ДОЛГ"); }
+            }} className="w-full py-4 bg-red-600 text-black font-black rounded-xl">ПОЛУЧИТЬ КРЕДИТ</button>
+            <button onClick={() => {
+              if(balance >= loan && loan > 0) { setBalance(b => b - loan); setLoan(0); showNotif("ПОГАШЕНО"); }
+            }} className="w-full py-4 border border-white/10 rounded-xl">ВЕРНУТЬ ДОЛГ</button>
+          </div>
+        )}
+
+        {activeTab === 'leader' && (
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-white/5 text-[10px] font-black uppercase opacity-40">
+                <tr><th className="p-6">RANK</th><th className="p-6">ИГРОК</th><th className="p-6">БАЛАНС</th></tr>
+              </thead>
+              <tbody>
+                <tr className="bg-yellow-500/5 text-yellow-500 font-bold">
+                  <td className="p-6">#1</td><td className="p-6">MANSUR_BOSS</td><td className="p-6">9,999,999 ₽</td>
+                </tr>
+                <tr className="bg-green-500/5 text-green-500 font-bold">
+                  <td className="p-6">#2</td><td className="p-6">{currentUser} (Вы)</td><td className="p-6">{balance.toLocaleString()} ₽</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-2">
+            {transactions.map(t => (
+              <div key={t.id} className="p-4 bg-[#0a0a0a] border border-white/5 rounded-xl flex justify-between text-xs font-bold">
+                <span className="opacity-40">{t.date} | {t.desc}</span>
+                <span className={t.amount > 0 ? 'text-green-500' : 'text-red-500'}>{t.amount > 0 ? '+' : ''}{t.amount} ₽</span>
+              </div>
+            ))}
+            {transactions.length === 0 && <p className="text-center opacity-20 py-20 uppercase font-black">История пуста</p>}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
